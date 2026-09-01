@@ -1,0 +1,42 @@
+name: Stealth LinkedIn Fetcher
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile_url:
+        description: 'The LinkedIn Profile URL to fetch'
+        required: true
+        type: string
+
+jobs:
+  scrape-profile:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install crawl4ai playwright
+          playwright install chromium
+
+      - name: Fetch LinkedIn Profile
+        env:
+          # This pulls the securely stored cookie from your GitHub Secrets
+          LI_AT_COOKIE: ${{ secrets.LI_AT_COOKIE }}
+        run: |
+          python cloud_fetcher.py "${{ github.event.inputs.profile_url }}"
+          
+      - name: Upload Profile Markdown as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: linkedin-profile-markdown
+          path: profile_data.md
+          retention-days: 1
